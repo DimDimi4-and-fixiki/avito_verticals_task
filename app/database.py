@@ -36,6 +36,7 @@ class DataBaseHandler(object):
         :param query: query text
         """
 
+        print(query)
         self.create_connection()  # sets connection
         cursor = self.connection.cursor()  # cursor to perform the query
         res = cursor.execute(query)  # result of the query
@@ -54,13 +55,23 @@ class DataBaseHandler(object):
         self.connection.commit()  # commits changes
 
     def get_last_id(self) -> int:
-        #  SELECT query to the database
+        #  SELECT query to the database:
         query = "SELECT MAX(id) FROM hotel_room"
         res = self.make_select_query(query=query)
         if not res[0][0]:
             return 0
         else:
             return int(res[0][0])
+
+    def get_last_booking_id(self) -> int:
+        #  SELECT query to the database:
+        query = "SELECT MAX(id) FROM booking"
+        res = self.make_select_query(query=query)
+        if not res[0][0]:
+            return 0
+        else:
+            return int(res[0][0])
+
 
     def get_room_id(self, room: HotelRoom) -> int:
         """
@@ -78,6 +89,20 @@ class DataBaseHandler(object):
         res = self.make_select_query(query=query)
         room_id = int(res[0][0])
         return room_id
+
+    def get_booking_id(self, booking: Booking) -> int:
+        dict_booking = booking.dict()
+        room_id = dict_booking["room_id"]
+        start_date = dict_booking["start_date"]
+        end_date = dict_booking["end_date"]
+        #  SELECT query to the database:
+        query = "SELECT * FROM booking " \
+                "WHERE hotel_id = {} " \
+                "AND start_date = \'{}\' " \
+                "AND end_date = \'{}\'".format(room_id, start_date, end_date)
+        res = self.make_select_query(query=query)
+        booking_id = int(res[0][0])
+        return booking_id
 
     def check_room(self, room: HotelRoom):
         """
@@ -125,8 +150,32 @@ class DataBaseHandler(object):
             room_id = self.get_room_id(room=room)
             return room_id
 
+    def check_booking(self, booking: Booking):
+        booking_dict = booking.dict()
+        room_id = booking_dict["room_id"]
+        start_date = booking_dict["start_date"]
+        end_date = booking_dict["end_date"]
+        #  SELECT query to the database:
+        query = "SELECT * FROM booking " \
+                "WHERE hotel_id = {} " \
+                "AND start_date = \'{}\' " \
+                "AND end_date = \'{}\'".format(room_id, start_date, end_date)
+        res = self.make_select_query(query=query)
+        return res == []
+
     def add_booking(self, booking: Booking) -> int:
         booking_dict = booking.dict()
         room_id = booking_dict["room_id"]
         start_date = booking_dict["start_date"]
         end_date = booking_dict["end_date"]
+        need_to_add = self.check_booking(booking=booking)
+        if need_to_add:
+            booking_id = int(self.get_last_booking_id()) + 1
+            query = "INSERT INTO booking (id, hotel_id, start_date, end_date) " \
+                    "VALUES ({}, {}, \'{}\', \'{}\')".format(booking_id, room_id, start_date, end_date)
+            self.make_insert_query(query=query)
+            return booking_id
+        else:
+            booking_id = self.get_booking_id(booking=booking)
+            return booking_id
+

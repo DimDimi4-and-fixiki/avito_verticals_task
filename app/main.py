@@ -22,6 +22,8 @@ def add_room(room: HotelRoom):
     room_id = database_handler.add_room(room=room)
     return {"id": room_id}
 
+
 @app.post("/add_booking")
 def add_booking(booking: Booking):
-    pass
+    booking_id = database_handler.add_booking(booking=booking)
+    return {"id": booking_id}
