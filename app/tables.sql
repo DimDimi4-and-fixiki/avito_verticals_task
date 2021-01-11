@@ -3,7 +3,9 @@
 CREATE TABLE hotel_room (
     id INT PRIMARY KEY NOT NULL,
     description TEXT NOT NULL,
-    price FLOAT NOT NULL
+    price FLOAT NOT NULL,
+    added_at TIMESTAMP
+
 );
 
 CREATE TABLE booking (

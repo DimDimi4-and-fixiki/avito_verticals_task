@@ -12,7 +12,7 @@ class DataBaseHandler(object):
         self.connection = connect(
             user="avito",
             host="localhost",
-            database="avito_task",
+            database="avito_backend",
             password="Stepler32"
         )
 
@@ -72,6 +72,10 @@ class DataBaseHandler(object):
         else:
             return int(res[0][0])
 
+    def get_current_timestamp(self) -> str:
+        query = "SELECT CURRENT_TIMESTAMP"
+        res = self.make_select_query(query=query)
+        return str(res[0][0])
 
     def get_room_id(self, room: HotelRoom) -> int:
         """
@@ -138,11 +142,14 @@ class DataBaseHandler(object):
         description = str(dict_room["description"])
         price = str(dict_room["price"])
         need_to_add = self.check_room(room)  # add or not to
+        added_at = self.get_current_timestamp()
+
         if need_to_add:
             # INSERT query to the database:
             room_id = self.get_last_id() + 1
-            query = "INSERT INTO hotel_room (id, description, price) " \
-                    "VALUES ({}, \'{}\', {})".format(room_id, description, price)
+            query = "INSERT INTO hotel_room (id, description, price, added_at) " \
+                    "VALUES ({}, \'{}\', {}, \'{}\')".format(
+                        room_id, description, price, added_at)
             self.make_insert_query(query)
             return room_id
         else:
