@@ -54,6 +54,18 @@ class DataBaseHandler(object):
         res = cursor.execute(query)  # result of the query
         self.connection.commit()  # commits changes
 
+    def make_delete_query(self, query: str):
+        """
+        makes a DELETE query to the database
+        commits changes to the database
+        :param query: query text
+        """
+
+        self.create_connection()  # sets connection
+        cursor = self.connection.cursor()  # cursor to execute the query
+        res = cursor.execute(query)  # result of the query
+        self.connection.commit()  # commits changes
+
     def get_last_id(self) -> int:
         #  SELECT query to the database:
         query = "SELECT MAX(id) FROM hotel_room"
@@ -131,6 +143,12 @@ class DataBaseHandler(object):
         res = self.make_select_query(query=query)
         return res
 
+    def get_all_rooms_sorted(self, sort_parameter, sort_direction="ASC"):
+        query = "SELECT * FROM hotel_room " \
+                "ORDER BY {} {}".format(sort_parameter, sort_direction)
+        res = self.make_select_query(query=query)
+        return res
+
     def add_room(self, room: HotelRoom) -> int:
         """
         Inserts a new hotel room into the database
@@ -185,4 +203,81 @@ class DataBaseHandler(object):
         else:
             booking_id = self.get_booking_id(booking=booking)
             return booking_id
+
+    def get_rooms(self, sort_parameter=None, sort_direction=None) -> list:
+        """
+        Gets list of rooms sorted by parameter in a direction (acs/desc)
+        :param sort_parameter: parameter to ORDER BY
+        :param sort_direction: direction to sort (ASC/DESC)
+        :return: list of rooms
+        """
+        if not sort_parameter:
+            res = self.get_all_rooms()
+        else:
+            res = self.get_all_rooms_sorted(sort_parameter=sort_parameter,
+                                            sort_direction=sort_direction)
+        ans = []
+        for room in res:
+            d = {
+                "room_id": room[0],
+                "description": room[1],
+                "price": room[2],
+                "added_at": room[3]
+            }
+            ans.append(d)
+        return ans
+
+    def get_bookings(self, room_id: int) -> list:
+        """
+        Gets list of booking for a room
+        :param room_id: id of the room
+        :return: bookings sorted by start date
+        """
+        query = "SELECT * FROM booking " \
+                "WHERE hotel_id = {} " \
+                "ORDER BY start_date".format(room_id)
+        res = self.make_select_query(query=query)
+        ans = []
+        for booking in res:
+            d = {
+                "booking_id": booking[0],
+                "start_date": booking[2],
+                "end_date": booking[3]
+            }
+            ans.append(d)
+        return ans
+
+    def delete_booking(self, booking_id: int):
+        """
+        Deletes booking of a room by its id
+        :param booking_id: id of the booking
+        """
+        # DELETE query to the database:
+        query = "DELETE FROM booking " \
+                "WHERE id = {}".format(booking_id)
+        self.make_delete_query(query=query)
+
+    def delete_bookings_by_room_id(self, room_id: int):
+        """
+        Deletes all bookings of a room by room's id
+        :param room_id: id of the room
+        """
+
+        # DELETE query to the database:
+        query = "DELETE FROM booking " \
+                "WHERE hotel_id = {}".format(room_id)
+        self.make_delete_query(query=query)
+
+    def delete_room(self, room_id: int):
+        """
+        Deletes room and the bookings of it
+        :param room_id: id of the room
+        """
+        # Firstly, delete all bookings:
+        self.delete_bookings_by_room_id(room_id=room_id)
+
+        # Delete record of the room from the table:
+        query = "DELETE FROM hotel_room " \
+                "WHERE id = {}".format(room_id)
+        self.make_delete_query(query=query)
 
