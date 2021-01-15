@@ -1,4 +1,5 @@
 
+-- TABLE with rooms
 
 CREATE TABLE hotel_room (
     id INT PRIMARY KEY NOT NULL,
@@ -7,6 +8,8 @@ CREATE TABLE hotel_room (
     added_at TIMESTAMP
 
 );
+
+-- TABLE with bookings of roomsE
 
 CREATE TABLE booking (
     id INT PRIMARY KEY NOT NULL,

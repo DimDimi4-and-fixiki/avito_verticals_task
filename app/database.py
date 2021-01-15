@@ -3,12 +3,20 @@ from models import HotelRoom, Booking
 
 
 class DataBaseHandler(object):
+    """"
+    Class to handle all the operations with PostgreSQL DB
+    """
     def __init__(self, **kwargs):
         self.connection = None
         self.create_connection()
         print(self.connection)
 
     def create_connection(self):
+        """
+        Sets connection with the database
+        """
+
+        # MY PARAMETERS OF THE DATABASE:
         self.connection = connect(
             user="avito",
             host="localhost",
@@ -25,7 +33,7 @@ class DataBaseHandler(object):
         print(query)
         self.create_connection()  # sets connection
         cursor = self.connection.cursor()  # cursor to execute the query
-        cursor.execute(query)
+        cursor.execute(query)  # Executes the query
         rows = cursor.fetchall()  # result of the query
         return rows
 
@@ -70,7 +78,7 @@ class DataBaseHandler(object):
         #  SELECT query to the database:
         query = "SELECT MAX(id) FROM hotel_room"
         res = self.make_select_query(query=query)
-        if not res[0][0]:
+        if not res[0][0]:  # Rooms table is empty
             return 0
         else:
             return int(res[0][0])
@@ -79,12 +87,18 @@ class DataBaseHandler(object):
         #  SELECT query to the database:
         query = "SELECT MAX(id) FROM booking"
         res = self.make_select_query(query=query)
-        if not res[0][0]:
+        if not res[0][0]:  # Bookings table is empty
             return 0
         else:
             return int(res[0][0])
 
     def get_current_timestamp(self) -> str:
+        """
+        Returns current DATE TIME (Timestamp)
+        :return: str object with a timestamp
+        """
+
+        # SELECT query:
         query = "SELECT CURRENT_TIMESTAMP"
         res = self.make_select_query(query=query)
         return str(res[0][0])
@@ -95,8 +109,9 @@ class DataBaseHandler(object):
         :param room: hotel room from the database
         :return: id of the room
         """
+
         # SELECT query to the database
-        dict_room = room.dict()
+        dict_room = room.dict()  # dictionary with the room info
         description = dict_room["description"]
         price = dict_room["price"]
         query = "SELECT * FROM hotel_room " \
@@ -107,7 +122,7 @@ class DataBaseHandler(object):
         return room_id
 
     def get_booking_id(self, booking: Booking) -> int:
-        dict_booking = booking.dict()
+        dict_booking = booking.dict()  # dictionary with the room info
         room_id = dict_booking["room_id"]
         start_date = dict_booking["start_date"]
         end_date = dict_booking["end_date"]
@@ -144,6 +159,12 @@ class DataBaseHandler(object):
         return res
 
     def get_all_rooms_sorted(self, sort_parameter, sort_direction="ASC"):
+        """
+        Gets list of rooms ordered by parameter
+        :param sort_parameter: parameter to sort by
+        :param sort_direction: direction to order by
+        :return: list of all rooms
+        """
         query = "SELECT * FROM hotel_room " \
                 "ORDER BY {} {}".format(sort_parameter, sort_direction)
         res = self.make_select_query(query=query)
@@ -156,7 +177,7 @@ class DataBaseHandler(object):
         :param room: Hotel room to be added
         :return:
         """
-        dict_room = room.dict()
+        dict_room = room.dict()  # Room in a dictionary
         description = str(dict_room["description"])
         price = str(dict_room["price"])
         need_to_add = self.check_room(room)  # add or not to
@@ -176,10 +197,11 @@ class DataBaseHandler(object):
             return room_id
 
     def check_booking(self, booking: Booking):
-        booking_dict = booking.dict()
+        booking_dict = booking.dict()  # Booking in a dictionary
         room_id = booking_dict["room_id"]
         start_date = booking_dict["start_date"]
         end_date = booking_dict["end_date"]
+
         #  SELECT query to the database:
         query = "SELECT * FROM booking " \
                 "WHERE hotel_id = {} " \
@@ -189,18 +211,20 @@ class DataBaseHandler(object):
         return res == []
 
     def add_booking(self, booking: Booking) -> int:
-        booking_dict = booking.dict()
-        room_id = booking_dict["room_id"]
-        start_date = booking_dict["start_date"]
-        end_date = booking_dict["end_date"]
-        need_to_add = self.check_booking(booking=booking)
+        booking_dict = booking.dict()  # dictionary with the booking
+        room_id = booking_dict["room_id"]  # id of the room
+        start_date = booking_dict["start_date"]  # date of start
+        end_date = booking_dict["end_date"]  # date of the end
+        need_to_add = self.check_booking(booking=booking)  # flag (add or not to add)
         if need_to_add:
+            #  Adds new booking:
             booking_id = int(self.get_last_booking_id()) + 1
             query = "INSERT INTO booking (id, hotel_id, start_date, end_date) " \
                     "VALUES ({}, {}, \'{}\', \'{}\')".format(booking_id, room_id, start_date, end_date)
             self.make_insert_query(query=query)
             return booking_id
         else:
+            # Returns id of existing booking:
             booking_id = self.get_booking_id(booking=booking)
             return booking_id
 
@@ -211,20 +235,21 @@ class DataBaseHandler(object):
         :param sort_direction: direction to sort (ASC/DESC)
         :return: list of rooms
         """
-        if not sort_parameter:
-            res = self.get_all_rooms()
+        if not sort_parameter:  # parameter is not defined
+            res = self.get_all_rooms()  # All rooms from the database
         else:
+            #  Gets ordered rooms:
             res = self.get_all_rooms_sorted(sort_parameter=sort_parameter,
                                             sort_direction=sort_direction)
-        ans = []
+        ans = []  # list to return
         for room in res:
-            d = {
+            d = {  # dictionary with the room
                 "room_id": room[0],
                 "description": room[1],
                 "price": room[2],
                 "added_at": room[3]
             }
-            ans.append(d)
+            ans.append(d)  # Adds room to the list
         return ans
 
     def get_bookings(self, room_id: int) -> list:
@@ -237,14 +262,14 @@ class DataBaseHandler(object):
                 "WHERE hotel_id = {} " \
                 "ORDER BY start_date".format(room_id)
         res = self.make_select_query(query=query)
-        ans = []
+        ans = []  # list to return
         for booking in res:
-            d = {
+            d = {  # dictionary with a booking
                 "booking_id": booking[0],
                 "start_date": booking[2],
                 "end_date": booking[3]
             }
-            ans.append(d)
+            ans.append(d)  # adds booking
         return ans
 
     def delete_booking(self, booking_id: int):
@@ -279,5 +304,6 @@ class DataBaseHandler(object):
         # Delete record of the room from the table:
         query = "DELETE FROM hotel_room " \
                 "WHERE id = {}".format(room_id)
+
         self.make_delete_query(query=query)
 

@@ -15,6 +15,6 @@ class Booking(BaseModel):
     model of a booking of a room
     includes id of the room and dates for start and end
     """
-    room_id: int
-    start_date: str
-    end_date: str
+    room_id: int  # Id of the room
+    start_date: str  # Date of start
+    end_date: str  # Date of the end
