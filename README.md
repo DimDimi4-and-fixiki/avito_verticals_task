@@ -1,4 +1,11 @@
 # JSON API для Avito Verticals  
+**Технологии, использованные для разработки:**
+* Python 3.7
+* FastAPI
+* PostgreSQL
+* pydantic
+
+
 **Методы сервиса:**  
 * **/add_room:**  
 Добавляет новый номер в базу данных.  
