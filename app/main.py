@@ -43,7 +43,12 @@ def add_booking(booking: Booking):
     :return: id of the booking
     """
     booking_id = database_handler.add_booking(booking=booking)
-    return {"id": booking_id}
+    if booking_id == "No such room":
+        return {"error": booking_id}
+    if booking_id in ["Start date is not valid", "End date is not valid"]:
+        return {"error": booking_id}
+    else:
+        return {"id": booking_id}
 
 
 @app.get("/get_bookings")
@@ -64,7 +69,9 @@ def delete_room(room_id: int):
     Deletes the room and all bookings of it
     :param room_id: id of the room
     """
-    database_handler.delete_room(room_id=room_id)
+    res = database_handler.delete_room(room_id=room_id)
+    if res == "No such room":
+        return {"error": res}
 
 
 @app.post("/delete_booking")
@@ -74,4 +81,6 @@ def delete_booking(booking_id: int):
     :param booking_id: id of the booking
     Deletes all information about the booking
     """
-    database_handler.delete_booking(booking_id=booking_id)
+    res = database_handler.delete_booking(booking_id=booking_id)
+    if res == "No such booking":
+        return {"error": res}

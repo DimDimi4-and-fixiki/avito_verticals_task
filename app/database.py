@@ -1,5 +1,6 @@
 from psycopg2 import connect
 from models import HotelRoom, Booking
+from dates import DateHandler
 
 
 class DataBaseHandler(object):
@@ -135,6 +136,32 @@ class DataBaseHandler(object):
         booking_id = int(res[0][0])
         return booking_id
 
+    def check_room_by_id(self, room_id) -> bool:
+        """
+        Checks if room in the database
+        :param room_id: id of the room
+        :return: True if room exists; False if not
+        """
+
+        # SELECT query to the database:
+        query = "SELECT * FROM hotel_room " \
+                "WHERE id = {}".format(str(room_id))
+        res = self.make_select_query(query=query)
+        return not res == []
+
+    def check_booking_by_id(self, booking_id) -> bool:
+        """
+        Checks if booking is in the database
+        :param booking_id: id of the booking
+        :return: True if booking is in the database; False if not
+        """
+
+        #  SELECT query to the database:
+        query = "SELECT * FROM booking " \
+                "WHERE id = {}".format(booking_id)
+        res = self.make_select_query(query=query)
+        return not res == []
+
     def check_room(self, room: HotelRoom):
         """
         Checks if room can be added
@@ -210,12 +237,29 @@ class DataBaseHandler(object):
         res = self.make_select_query(query=query)
         return res == []
 
-    def add_booking(self, booking: Booking) -> int:
+    def add_booking(self, booking: Booking):
+        date_handler = DateHandler()
         booking_dict = booking.dict()  # dictionary with the booking
         room_id = booking_dict["room_id"]  # id of the room
         start_date = booking_dict["start_date"]  # date of start
         end_date = booking_dict["end_date"]  # date of the end
-        need_to_add = self.check_booking(booking=booking)  # flag (add or not to add)
+
+        #  Checks dates:
+        if not date_handler.check_date(date=start_date):
+            return "Start date is not valid"
+        if not date_handler.check_date(date=end_date):
+            return "End date is not valid"
+
+        #  Checks if booking is needed to be added:
+        need_to_add = self.check_booking(booking=booking)  # flag
+
+        #  Checks if room exists:
+        room_exists = self.check_room_by_id(room_id=room_id)
+
+        if not room_exists:  # The room is not in the table
+            return "No such room"
+
+        # (add or not to add)
         if need_to_add:
             #  Adds new booking:
             booking_id = int(self.get_last_booking_id()) + 1
@@ -277,6 +321,11 @@ class DataBaseHandler(object):
         Deletes booking of a room by its id
         :param booking_id: id of the booking
         """
+
+        # Checks if booking is in the database:
+        booking_exists = self.check_booking_by_id(booking_id=booking_id)
+        if not booking_exists:
+            return "No such booking"
         # DELETE query to the database:
         query = "DELETE FROM booking " \
                 "WHERE id = {}".format(booking_id)
@@ -298,6 +347,12 @@ class DataBaseHandler(object):
         Deletes room and the bookings of it
         :param room_id: id of the room
         """
+
+        #  Checks if room is in the database:
+        room_exists = self.check_room_by_id(room_id=room_id)
+        if not room_exists:  # Room is not in the table
+            return "No such room"
+
         # Firstly, delete all bookings:
         self.delete_bookings_by_room_id(room_id=room_id)
 

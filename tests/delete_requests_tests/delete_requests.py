@@ -3,7 +3,7 @@ import pytest
 import json
 
 
-@pytest.mark.parametrize("booking_id", [i for i in range(1, 200)])
+@pytest.mark.parametrize("booking_id", [i for i in range(1, 3000)])
 def test_delete_booking(booking_id):
     """
     Tests if delete_bookings request returns OK
@@ -27,7 +27,7 @@ def test_delete_booking(booking_id):
     assert response.status_code == 200
 
 
-@pytest.mark.parametrize("room_id", [i for i in range(1, 500)])
+@pytest.mark.parametrize("room_id", [i for i in range(1, 3000)])
 def test_delete_room(room_id):
     """
     Tests if delete_room requests returns OK
